@@ -86,7 +86,7 @@ export default class MatchQueue {
     upload.textContent = 'upload';
     upload.id = "file-upload";
     upload.setAttribute('type', 'file');
-    upload.accept = '.bc20';
+    upload.accept = '.bc20,.json';
     upload.onchange = () => this.loadMatch(upload.files as FileList);
     uploadLabel.appendChild(upload);
 

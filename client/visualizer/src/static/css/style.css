@@ -456,6 +456,11 @@ input {
     cursor: pointer;
 }
 
+.teamAvatar {
+    width: 70px;
+    height: 70px;
+}
+
 #mapsDiv option {
     padding: 3px 10px;
 }

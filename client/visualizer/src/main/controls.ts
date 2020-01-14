@@ -2,6 +2,9 @@ import {Config, Mode} from '../config';
 import * as imageloader from '../imageloader';
 import * as cst from '../constants';
 
+import {path} from '../electron-modules';
+
+
 type ButtonInfo = {
   img: HTMLImageElement,
   text: string,
@@ -28,12 +31,14 @@ export default class Controls {
    */
 
   onGameLoaded: (data: ArrayBuffer) => void;
+  onTournamentLoaded: (path: string) => void;
   onTogglePause: () => void;
   onToggleUPS: () => void;
   onToggleRewind: () => void;
   onStepForward: () => void;
   onStepBackward: () => void;
   onSeek: (frame: number) => void;
+  onNextMatch: () => void;
   isPaused: () => Boolean;
 
   // qualities of progress bar
@@ -54,6 +59,7 @@ export default class Controls {
     reverseUPS: ButtonInfo,
     doubleUPS: ButtonInfo,
     halveUPS: ButtonInfo,
+    matchForward: ButtonInfo
   };
 
   constructor(conf: Config, images: imageloader.AllImages) {
@@ -76,8 +82,8 @@ export default class Controls {
       reverseUPS: { img: imgs.reverseUPS, text: "Reverse", onclick: () => this.reverseUPS() },
       doubleUPS: { img: imgs.doubleUPS, text: "Faster", onclick: () => this.doubleUPS() },
       halveUPS: { img: imgs.halveUPS, text: "Slower", onclick: () => this.halveUPS() },
+      matchForward: { img: imgs.matchForward, text: "Next Match", onclick: () => this.onNextMatch() },
     };
-
 
     let table = document.createElement("table");
     let tr = document.createElement("tr");
@@ -112,6 +118,7 @@ export default class Controls {
     buttons.appendChild(goNextButton);
     buttons.appendChild(doubleButton);
     buttons.appendChild(stopButton);
+    buttons.appendChild(this.createButton('matchForward'));
     buttons.appendChild(document.createElement("br"));
     buttons.appendChild(this.tileInfo);
 
@@ -222,11 +229,15 @@ export default class Controls {
    */
   loadMatch(files: FileList) {
     const file = files[0];
+    if (file.path.endsWith(".json")) {
+    this.onTournamentLoaded(path.dirname(file.path));
+  } else {
     const reader = new FileReader();
-    reader.onload = () => {
-      this.onGameLoaded(<ArrayBuffer>reader.result);
-    };
-    reader.readAsArrayBuffer(file);
+      reader.onload = () => {
+        this.onGameLoaded(reader.result as ArrayBuffer);
+      };
+      reader.readAsArrayBuffer(file);
+    }
   }
 
   /**

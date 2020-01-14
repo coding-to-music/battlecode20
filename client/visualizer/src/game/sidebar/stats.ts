@@ -2,6 +2,7 @@ import {Config} from '../../config';
 import * as cst from '../../constants';
 import {AllImages} from '../../imageloader';
 import {Block,Transaction} from 'battlecode-playback';
+import {Scorecard} from '../index';
 
 import {schema} from 'battlecode-playback';
 
@@ -33,6 +34,14 @@ export default class Stats {
   private statBars: Map<number, { soups: StatBar }>;
   private statsTableElement: HTMLTableElement;
 
+  private readonly teams: HTMLDivElement;
+
+  // Scorecard for tournaments
+  private redID: number;
+  private blueID: number;
+  private scorecard: Scorecard = new Scorecard();
+
+
   private robotConsole: HTMLDivElement;
 
   private blockchain: HTMLDivElement;
@@ -52,6 +61,10 @@ export default class Stats {
     this.images = images;
     this.div = document.createElement("div");
 
+    this.teams = document.createElement("div");
+    this.div.appendChild(this.teams);
+    this.div.appendChild(this.scorecard.div);
+
     let teamNames: Array<string> = ["?????", "?????"];
     let teamIDs: Array<number> = [1, 2];
     this.statsTableElement = document.createElement("table");
@@ -61,9 +74,18 @@ export default class Stats {
   /**
    * Colored banner labeled with the given teamName
    */
-  private teamHeaderNode(teamName: string, inGameID: number) {
+  private teamHeaderNode(teamName: string, inGameID: number, avatar?: string) {
     let teamHeader: HTMLDivElement = document.createElement("div");
     teamHeader.className += ' teamHeader';
+
+    if (avatar) {
+      let teamAvatarNode = document.createElement('img');
+      teamAvatarNode.src = avatar;
+      teamAvatarNode.className = "teamAvatar";
+      let teamAvatarDiv = document.createElement('div');
+      teamAvatarDiv.appendChild(teamAvatarNode);
+      teamHeader.appendChild(teamAvatarDiv);
+    }
 
     let teamNameNode = document.createTextNode(teamName);
     teamHeader.style.backgroundColor = hex[inGameID];
@@ -168,13 +190,20 @@ export default class Stats {
   /**
    * Clear the current stats bar and reinitialize it with the given teams.
    */
-  initializeGame(teamNames: Array<string>, teamIDs: Array<number>){
+  initializeGame(teamNames: Array<string>, teamIDs: Array<number>, teamAvatars?: Array<string>){
     // Remove the previous match info
-    while (this.div.firstChild) {
-      this.div.removeChild(this.div.firstChild);
+    while (this.teams.firstChild) {
+      this.teams.removeChild(this.teams.firstChild);
     }
     this.robotTds = {};
     this.statBars = new Map<number, { soups: StatBar }>();
+
+    // Store the team IDs as red and blue
+    if (teamIDs.length >= 2) {
+      this.redID = teamIDs[0];
+      this.blueID = teamIDs[1];
+    }
+
 
     // Add view toggles
     this.div.append(this.addViewOptions());
@@ -185,6 +214,7 @@ export default class Stats {
       // Collect identifying information
       let teamID = teamIDs[index];
       let teamName = teamNames[index];
+      let teamAvatar = teamAvatars? teamAvatars[index] : undefined;
       let inGameID = index + 1; // teams start at index 1
       console.log("Team: " + inGameID);
 
@@ -224,11 +254,11 @@ export default class Stats {
       });
 
       // Add the team name banner and the robot count table
-      teamDiv.appendChild(this.teamHeaderNode(teamName, inGameID));
+      teamDiv.appendChild(this.teamHeaderNode(teamName, inGameID, teamAvatar));
       teamDiv.appendChild(this.robotTable(teamID, inGameID));
       teamDiv.appendChild(document.createElement("br"));
 
-      this.div.appendChild(teamDiv);
+      this.teams.appendChild(teamDiv);
     }
 
     // Add stats table
@@ -367,4 +397,24 @@ export default class Stats {
   //   statBar.label.innerText = String(count.toPrecision(5));
   //   statBar.bar.style.height = `${100 * count / cst.BULLET_THRESH}%`;
   // }
+
+
+  /**
+   * Resets the scorecard to 0-0. Call this at the BEGINNING of a game.
+   */
+  resetScore(): void {
+    this.scorecard.setScore(0, 0);
+  }
+
+  /**
+   * Changes the scorecard by giving 1 point to the winning team of a match.
+   * Call this at the END of each match. (we may have to invoke this manually? :/)
+   */
+  updateScore(winnerID: number) {
+    if (winnerID === this.redID) {
+      this.scorecard.incrementA();
+    } else if (winnerID === this.blueID) {
+      this.scorecard.incrementB();
+    }
+  }
 }

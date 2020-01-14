@@ -91,7 +91,9 @@ export default class Sidebar {
     // modePanelRow.appendChild(this.modeButton(Mode.MAPEDITOR, "Map Editor"));
     modePanelRow.appendChild(this.modeButton(Mode.HELP, "Help"));
     modePanel.appendChild(modePanelRow);
-    this.div.appendChild(modePanel);
+    // this.div.appendChild(modePanel); // TOURNAMENT MODE
+    this.div.appendChild(this.tournamentInfo()); // TOURNAMENT MODE
+    this.div.appendChild(document.createElement("br")); // TOURNAMENT MODE
 
     this.div.appendChild(this.innerDiv);
 
@@ -108,6 +110,15 @@ export default class Sidebar {
   addScaffold(scaffold: ScaffoldCommunicator): void {
     this.mapeditor.addScaffold(scaffold);
     this.matchrunner.addScaffold(scaffold);
+  }
+
+  /**
+   * Points to battlecode.org/info
+   */
+  private tournamentInfo(): HTMLDivElement {
+    const div = document.createElement("div");
+    div.appendChild(document.createTextNode("battlecode.org/info"));
+    return div;
   }
 
   /**
